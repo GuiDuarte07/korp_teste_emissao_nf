@@ -3,12 +3,15 @@ using ApiGateway.Services.Implementations;
 using ApiGateway.Services.Interfaces;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Contracts.Inventory;
+using Shared.Contracts.Invoice;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 // Configuração do MassTransit com RabbitMQ
 builder.Services.AddMassTransit(x =>

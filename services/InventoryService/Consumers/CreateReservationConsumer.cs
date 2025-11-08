@@ -29,8 +29,11 @@ public class CreateReservationConsumer : IConsumer<CreateStockReservationRequest
             // Verifica disponibilidade de estoque para todos os produtos
             var productIds = request.Items.Select(i => i.ProductId).ToList();
             
+            // Lock pessimista: FOR UPDATE bloqueia as linhas até o fim da transação
+            // Previne race condition quando dois usuários tentam reservar o mesmo produto simultaneamente
             var products = await _context.Products
-                .Where(p => productIds.Contains(p.Id))
+                .FromSqlRaw("SELECT * FROM \"Products\" WHERE \"Id\" = ANY(@productIds) FOR UPDATE", 
+                    new Npgsql.NpgsqlParameter("@productIds", productIds.ToArray()))
                 .ToListAsync();
 
             var insufficientStockProducts = new List<string>();
@@ -48,7 +51,7 @@ public class CreateReservationConsumer : IConsumer<CreateStockReservationRequest
                     return;
                 }
 
-                // Calcula estoque reservado
+                // Calcula estoque reservado (as outras transações esperarão o lock liberar)
                 var reservedStock = await _context.StockReservationItems
                     .Where(ri => ri.ProductId == product.Id 
                         && !ri.Reservation.Confirmed 

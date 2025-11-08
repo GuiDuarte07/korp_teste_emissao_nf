@@ -99,6 +99,42 @@ namespace ApiGateway.Controllers
             }
         }
 
+        [HttpGet("health")]
+        public async Task<IActionResult> GetHealth()
+        {
+            try
+            {
+                var result = await _inventoryService.GetHealthAsync();
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao verificar health");
+                return StatusCode(500, new { ErrorCode = ErrorCode.INTERNAL_ERROR.ToString(), ErrorMessage = "Erro interno ao verificar saúde do serviço" });
+            }
+        }
+
+        [HttpGet("stock-status")]
+        public async Task<IActionResult> GetStockStatus()
+        {
+            try
+            {
+                var result = await _inventoryService.GetStockStatusAsync();
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar status do estoque");
+                return StatusCode(500, new { ErrorCode = ErrorCode.INTERNAL_ERROR.ToString(), ErrorMessage = "Erro interno ao buscar status do estoque" });
+            }
+        }
+
+
+        // ROTAS DE RESERVAS DE ESTOQUE
+        // END-POINTS CRIADOS PORÉM A RESERVA JÁ É FEITA ROTA DE CRIAÇÃO DE NOTA FISCAL
+        // ROTAS DESENVOLVIDAS APENAS PARA TESTES E PARA NECESSIDADES FUTURAS
+
+
         [HttpPost("reservations")]
         public async Task<IActionResult> CreateReservation([FromBody] CreateStockReservationRequest request)
         {
@@ -141,36 +177,6 @@ namespace ApiGateway.Controllers
             {
                 _logger.LogError(ex, "Erro ao cancelar reserva {ReservationId}", id);
                 return StatusCode(500, new { ErrorCode = ErrorCode.INTERNAL_ERROR.ToString(), ErrorMessage = "Erro interno ao cancelar reserva" });
-            }
-        }
-
-        [HttpGet("health")]
-        public async Task<IActionResult> GetHealth()
-        {
-            try
-            {
-                var result = await _inventoryService.GetHealthAsync();
-                return result.ToActionResult();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao verificar health");
-                return StatusCode(500, new { ErrorCode = ErrorCode.INTERNAL_ERROR.ToString(), ErrorMessage = "Erro interno ao verificar saúde do serviço" });
-            }
-        }
-
-        [HttpGet("stock-status")]
-        public async Task<IActionResult> GetStockStatus()
-        {
-            try
-            {
-                var result = await _inventoryService.GetStockStatusAsync();
-                return result.ToActionResult();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao buscar status do estoque");
-                return StatusCode(500, new { ErrorCode = ErrorCode.INTERNAL_ERROR.ToString(), ErrorMessage = "Erro interno ao buscar status do estoque" });
             }
         }
     }

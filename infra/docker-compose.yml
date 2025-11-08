@@ -22,6 +22,27 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # PostgreSQL para InvoiceService
+  postgres-invoice:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: postgres-invoice
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${INVOICE_DB_NAME}
+    ports:
+      - "${INVOICE_DB_PORT}:5432"
+    volumes:
+      - postgres-invoice-data:/var/lib/postgresql/data
+    networks:
+      - korp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${INVOICE_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   # RabbitMQ Message Broker
   rabbitmq:
     image: rabbitmq:${RABBITMQ_VERSION}
@@ -43,8 +64,86 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # InventoryService
+  inventory-service:
+    build:
+      context: ..
+      dockerfile: services/InventoryService/Dockerfile
+    container_name: inventory-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__DefaultConnection: "Host=postgres-inventory;Port=5432;Database=${INVENTORY_DB_NAME};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5038:8080"
+    networks:
+      - korp-network
+    depends_on:
+      postgres-inventory:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # InvoiceService
+  invoice-service:
+    build:
+      context: ..
+      dockerfile: services/InvoiceService/Dockerfile
+    container_name: invoice-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__DefaultConnection: "Host=postgres-invoice;Port=5432;Database=${INVOICE_DB_NAME};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5099:8080"
+    networks:
+      - korp-network
+    depends_on:
+      postgres-invoice:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ApiGateway
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: services/ApiGateway/ApiGateway/Dockerfile
+    container_name: api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5263:8080"
+    networks:
+      - korp-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      inventory-service:
+        condition: service_started
+      invoice-service:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   postgres-inventory-data:
+    driver: local
+  postgres-invoice-data:
     driver: local
   rabbitmq-data:
     driver: local

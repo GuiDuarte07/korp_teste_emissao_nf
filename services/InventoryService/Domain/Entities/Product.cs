@@ -9,6 +9,5 @@ public class Product
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
-    // Navegação
     public ICollection<StockReservationItem> ReservationItems { get; set; } = new List<StockReservationItem>();
 }

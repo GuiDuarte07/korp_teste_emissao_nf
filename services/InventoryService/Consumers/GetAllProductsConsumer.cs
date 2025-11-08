@@ -20,10 +20,10 @@ public class GetAllProductsConsumer : IConsumer<GetAllProductsRequest>
 
     public async Task Consume(ConsumeContext<GetAllProductsRequest> context)
     {
-        _logger.LogInformation("=== RECEBEU MENSAGEM GetAllProductsRequest ===");
-        
         try
         {
+            _logger.LogInformation("Buscando todos os produtos");
+            
             var products = await _context.Products
                 .Select(p => new ProductDto
                 {
@@ -37,12 +37,10 @@ public class GetAllProductsConsumer : IConsumer<GetAllProductsRequest>
                 })
                 .ToListAsync();
 
-            _logger.LogInformation("=== ENVIANDO RESPOSTA: {Count} produtos ===", products.Count);
+            _logger.LogInformation("{Count} produtos encontrados", products.Count);
             
             var result = Result<List<ProductDto>>.Success(products);
             await context.RespondAsync(result);
-            
-            _logger.LogInformation("=== RESPOSTA ENVIADA COM SUCESSO ===");
         }
         catch (Exception ex)
         {

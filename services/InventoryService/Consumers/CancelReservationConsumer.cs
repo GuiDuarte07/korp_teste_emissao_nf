@@ -24,19 +24,22 @@ public class CancelReservationConsumer : IConsumer<CancelReservationRequest>
             var reservation = await _context.StockReservations
                 .Include(r => r.Items)
                     .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(r => r.Id == context.Message.ReservationId);
+                .FirstOrDefaultAsync(r => r.InvoiceId == context.Message.InvoiceId);
 
             if (reservation == null)
             {
+                _logger.LogWarning("Reserva para Invoice {InvoiceId} não encontrada", context.Message.InvoiceId);
                 await context.RespondAsync(Result<StockReservationResponse>.Failure(
                     ErrorCode.RESERVATION_NOT_FOUND,
-                    $"Reserva com ID {context.Message.ReservationId} não encontrada"
+                    $"Reserva para Invoice {context.Message.InvoiceId} não encontrada"
                 ));
                 return;
             }
 
             if (reservation.Confirmed)
             {
+                _logger.LogWarning("Tentativa de cancelar reserva {ReservationId} já confirmada para Invoice {InvoiceId}", 
+                    reservation.Id, context.Message.InvoiceId);
                 await context.RespondAsync(Result<StockReservationResponse>.Failure(
                     ErrorCode.ALREADY_CONFIRMED,
                     "Não é possível cancelar uma reserva já confirmada"
@@ -46,7 +49,8 @@ public class CancelReservationConsumer : IConsumer<CancelReservationRequest>
 
             if (reservation.Cancelled)
             {
-                _logger.LogInformation("Reserva {ReservationId} já estava cancelada (idempotência)", reservation.Id);
+                _logger.LogInformation("Reserva {ReservationId} para Invoice {InvoiceId} já estava cancelada", 
+                    reservation.Id, context.Message.InvoiceId);
                 
                 var alreadyCancelledResponse = BuildResponse(reservation);
                 await context.RespondAsync(Result<StockReservationResponse>.Success(alreadyCancelledResponse));
@@ -58,14 +62,15 @@ public class CancelReservationConsumer : IConsumer<CancelReservationRequest>
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Reserva cancelada: {ReservationId}", reservation.Id);
+            _logger.LogInformation("Reserva {ReservationId} para Invoice {InvoiceId} cancelada com sucesso", 
+                reservation.Id, context.Message.InvoiceId);
 
             var response = BuildResponse(reservation);
             await context.RespondAsync(Result<StockReservationResponse>.Success(response));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao cancelar reserva {ReservationId}", context.Message.ReservationId);
+            _logger.LogError(ex, "Erro ao cancelar reserva para Invoice {InvoiceId}", context.Message.InvoiceId);
             await context.RespondAsync(Result<StockReservationResponse>.Failure(
                 ErrorCode.INTERNAL_ERROR,
                 "Erro ao cancelar reserva"
