@@ -53,42 +53,48 @@ public class PrintInvoiceConsumer : IConsumer<PrintInvoiceRequest>
                 return;
             }
 
-            // Confirma todas as reservas (debita estoque no InventoryService)
-            _logger.LogInformation("Confirmando {Count} reservas da nota #{InvoiceNumber}",
-                invoice.Items.Count, invoice.InvoiceNumber);
-
-            foreach (var item in invoice.Items)
+            // Confirma a reserva (debita estoque no InventoryService)
+            // Uma reserva é criada por invoice, então confirmamos apenas uma vez
+            var reservationId = invoice.Items.FirstOrDefault()?.ReservationId;
+            
+            if (!reservationId.HasValue)
             {
-                if (item.ReservationId.HasValue)
+                _logger.LogWarning("Nota fiscal #{InvoiceNumber} não possui reserva associada", invoice.InvoiceNumber);
+                await context.RespondAsync(Result<InvoiceDto>.Failure(
+                    ErrorCode.INVALID_REQUEST,
+                    "Nota fiscal não possui reserva de estoque associada"));
+                return;
+            }
+
+            _logger.LogInformation("Confirmando reserva {ReservationId} da nota #{InvoiceNumber}",
+                reservationId.Value, invoice.InvoiceNumber);
+
+            try
+            {
+                var confirmResponse = await _confirmReservationClient.GetResponse<Result<StockReservationResponse>>(
+                    new ConfirmReservationRequest { ReservationId = reservationId.Value },
+                    timeout: RequestTimeout.After(s: 30));
+
+                if (!confirmResponse.Message.IsSuccess)
                 {
-                    try
-                    {
-                        var confirmResponse = await _confirmReservationClient.GetResponse<Result>(
-                            new ConfirmReservationRequest { ReservationId = item.ReservationId.Value },
-                            timeout: RequestTimeout.After(s: 30));
+                    _logger.LogError("Falha ao confirmar reserva {ReservationId}: {Error}",
+                        reservationId.Value, confirmResponse.Message.ErrorMessage);
 
-                        if (!confirmResponse.Message.IsSuccess)
-                        {
-                            _logger.LogError("Falha ao confirmar reserva {ReservationId}: {Error}",
-                                item.ReservationId.Value, confirmResponse.Message.ErrorMessage);
-
-                            await context.RespondAsync(Result<InvoiceDto>.Failure(
-                                ErrorCode.INTERNAL_ERROR,
-                                $"Falha ao confirmar reserva: {confirmResponse.Message.ErrorMessage}"));
-                            return;
-                        }
-
-                        _logger.LogInformation("Reserva {ReservationId} confirmada", item.ReservationId.Value);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Erro ao confirmar reserva {ReservationId}", item.ReservationId.Value);
-                        await context.RespondAsync(Result<InvoiceDto>.Failure(
-                            ErrorCode.INTERNAL_ERROR,
-                            $"Erro ao confirmar reserva: {ex.Message}"));
-                        return;
-                    }
+                    await context.RespondAsync(Result<InvoiceDto>.Failure(
+                        confirmResponse.Message.ErrorCode ?? ErrorCode.INTERNAL_ERROR,
+                        $"Falha ao confirmar reserva: {confirmResponse.Message.ErrorMessage}"));
+                    return;
                 }
+
+                _logger.LogInformation("Reserva {ReservationId} confirmada com sucesso", reservationId.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao confirmar reserva {ReservationId}", reservationId.Value);
+                await context.RespondAsync(Result<InvoiceDto>.Failure(
+                    ErrorCode.INTERNAL_ERROR,
+                    $"Erro ao confirmar reserva: {ex.Message}"));
+                return;
             }
 
             // Atualiza status da nota para Closed
@@ -106,6 +112,8 @@ public class PrintInvoiceConsumer : IConsumer<PrintInvoiceRequest>
                 Status = "Closed",
                 CreatedAt = invoice.CreatedAt,
                 PrintedAt = invoice.PrintedAt,
+                Cancelled = invoice.Cancelled,
+                CancelledAt = invoice.CancelledAt,
                 Items = invoice.Items.Select(i => new InvoiceItemDto
                 {
                     Id = i.Id,

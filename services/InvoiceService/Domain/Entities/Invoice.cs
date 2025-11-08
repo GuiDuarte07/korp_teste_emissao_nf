@@ -7,6 +7,8 @@ public class Invoice
     public InvoiceStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? PrintedAt { get; set; } // Data de impressão (quando virou Closed)
+    public bool Cancelled { get; set; } // Nota fiscal cancelada (soft delete)
+    public DateTime? CancelledAt { get; set; } // Data de cancelamento
     
     public ICollection<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
 }

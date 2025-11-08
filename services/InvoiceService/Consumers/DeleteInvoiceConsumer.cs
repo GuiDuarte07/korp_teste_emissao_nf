@@ -24,7 +24,7 @@ public class DeleteInvoiceConsumer : IConsumer<DeleteInvoiceRequest>
     {
         try
         {
-            _logger.LogInformation("Deletando nota fiscal {InvoiceId}", context.Message.Id);
+            _logger.LogInformation("Cancelando nota fiscal {InvoiceId}", context.Message.Id);
 
             var invoice = await _context.Invoices
                 .Include(i => i.Items)
@@ -39,44 +39,58 @@ public class DeleteInvoiceConsumer : IConsumer<DeleteInvoiceRequest>
                 return;
             }
 
-            // Nota: apenas notas Open podem ser deletadas (regra de negócio)
-            // Notas Closed já foram impressas e estoque debitado
-            if (invoice.Status == Domain.Entities.InvoiceStatus.Closed)
+            if (invoice.Cancelled)
             {
-                _logger.LogWarning("Tentativa de deletar nota fiscal fechada {InvoiceNumber}", invoice.InvoiceNumber);
+                _logger.LogWarning("Nota fiscal #{InvoiceNumber} já está cancelada", invoice.InvoiceNumber);
                 await context.RespondAsync(Result.Failure(
                     ErrorCode.INVALID_REQUEST,
-                    "Não é possível deletar nota fiscal já impressa (fechada)"));
+                    "Nota fiscal já está cancelada"));
                 return;
             }
 
-            // Cancela a reserva de estoque antes de deletar a nota
-            // Usa Publish (fire-and-forget) ao invés de Request/Response porque:
-            // 1. Não precisamos esperar pela resposta (nota será deletada de qualquer forma)
-            // 2. RabbitMQ garante entrega: mensagem fica na fila até InventoryService processar
-            // 3. Resiliente: funciona mesmo se InventoryService estiver temporariamente fora
+            // Nota: apenas notas Open podem ser canceladas (regra de negócio)
+            // Notas Closed já foram impressas e estoque debitado
+            if (invoice.Status == Domain.Entities.InvoiceStatus.Closed)
+            {
+                _logger.LogWarning("Tentativa de cancelar nota fiscal fechada {InvoiceNumber}", invoice.InvoiceNumber);
+                await context.RespondAsync(Result.Failure(
+                    ErrorCode.INVALID_REQUEST,
+                    "Não é possível cancelar nota fiscal já impressa (fechada)"));
+                return;
+            }
 
-            _logger.LogInformation("Publicando evento de cancelamento de reserva da nota #{InvoiceNumber}", invoice.InvoiceNumber);
-            
-            await context.Publish(new CancelReservationRequest 
-            { 
-                InvoiceId = invoice.Id 
-            });
+            // Marca como cancelada
+            invoice.Cancelled = true;
+            invoice.CancelledAt = DateTime.UtcNow;
 
-            // Delete cascade vai remover os InvoiceItems automaticamente
-            _context.Invoices.Remove(invoice);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Nota fiscal #{InvoiceNumber} deletada com sucesso. Cancelamentos de reserva publicados.", invoice.InvoiceNumber);
+            _logger.LogInformation("Nota fiscal #{InvoiceNumber} cancelada com sucesso", invoice.InvoiceNumber);
+
+            // Publica evento de domínio para que outros serviços reajam ao cancelamento
+            // InventoryService irá assinar este evento e cancelar a reserva de forma assíncrona e desacoplada
+            _logger.LogInformation("Publicando evento InvoiceCancelledEvent para nota #{InvoiceNumber}", invoice.InvoiceNumber);
+            
+            await context.Publish(new InvoiceCancelledEvent
+            {
+                InvoiceId = invoice.Id,
+                InvoiceNumber = invoice.InvoiceNumber,
+                CancelledAt = invoice.CancelledAt.Value,
+                Items = invoice.Items.Select(i => new InvoiceCancelledItem
+                {
+                    ProductId = i.ProductId,
+                    Quantity = i.Quantity
+                }).ToList()
+            });
 
             await context.RespondAsync(Result.Success());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao deletar nota fiscal {InvoiceId}", context.Message.Id);
+            _logger.LogError(ex, "Erro ao cancelar nota fiscal {InvoiceId}", context.Message.Id);
             await context.RespondAsync(Result.Failure(
                 ErrorCode.INTERNAL_ERROR,
-                "Erro ao deletar nota fiscal"));
+                "Erro ao cancelar nota fiscal"));
         }
     }
 }

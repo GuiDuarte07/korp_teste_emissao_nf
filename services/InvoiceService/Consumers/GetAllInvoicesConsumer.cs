@@ -22,10 +22,42 @@ public class GetAllInvoicesConsumer : IConsumer<GetAllInvoicesRequest>
     {
         try
         {
-            _logger.LogInformation("Buscando todas as notas fiscais");
+            var request = context.Message;
+            _logger.LogInformation("Buscando notas fiscais com filtros: Status={Status}, IncludeCancelled={IncludeCancelled}, CreatedFrom={CreatedFrom}, CreatedTo={CreatedTo}",
+                request.Status, request.IncludeCancelled, request.CreatedFrom, request.CreatedTo);
 
-            var invoices = await _context.Invoices
+            var query = _context.Invoices
                 .Include(i => i.Items)
+                .AsQueryable();
+
+            // Filtro por status (Open/Closed)
+            if (!string.IsNullOrEmpty(request.Status))
+            {
+                if (Enum.TryParse<InvoiceStatus>(request.Status, true, out var status))
+                {
+                    query = query.Where(i => i.Status == status);
+                }
+            }
+
+            // Filtro por canceladas
+            if (request.IncludeCancelled.HasValue)
+            {
+                query = query.Where(i => i.Cancelled == request.IncludeCancelled.Value);
+            }
+
+            // Filtro por data de criação
+            if (request.CreatedFrom.HasValue)
+            {
+                query = query.Where(i => i.CreatedAt >= request.CreatedFrom.Value);
+            }
+
+            if (request.CreatedTo.HasValue)
+            {
+                var endOfDay = request.CreatedTo.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(i => i.CreatedAt <= endOfDay);
+            }
+
+            var invoices = await query
                 .OrderByDescending(i => i.InvoiceNumber)
                 .Select(i => new InvoiceDto
                 {
@@ -34,6 +66,8 @@ public class GetAllInvoicesConsumer : IConsumer<GetAllInvoicesRequest>
                     Status = i.Status == InvoiceStatus.Open ? "Open" : "Closed",
                     CreatedAt = i.CreatedAt,
                     PrintedAt = i.PrintedAt,
+                    Cancelled = i.Cancelled,
+                    CancelledAt = i.CancelledAt,
                     Items = i.Items.Select(item => new InvoiceItemDto
                     {
                         Id = item.Id,

@@ -19,11 +19,11 @@ public class InvoiceController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllInvoices()
+    public async Task<IActionResult> GetAllInvoices([FromQuery] GetAllInvoicesRequest request)
     {
         try
         {
-            var result = await _invoiceService.GetAllInvoicesAsync();
+            var result = await _invoiceService.GetAllInvoicesAsync(request);
             return result.ToActionResult();
         }
         catch (Exception ex)

@@ -7,6 +7,8 @@ public class InvoiceDto
     public string Status { get; set; } = string.Empty; // "Open" ou "Closed"
     public DateTime CreatedAt { get; set; }
     public DateTime? PrintedAt { get; set; }
+    public bool Cancelled { get; set; }
+    public DateTime? CancelledAt { get; set; }
     public List<InvoiceItemDto> Items { get; set; } = new();
 }
 

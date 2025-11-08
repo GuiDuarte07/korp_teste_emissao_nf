@@ -34,6 +34,8 @@ public class GetInvoiceByIdConsumer : IConsumer<GetInvoiceByIdRequest>
                     Status = i.Status == InvoiceStatus.Open ? "Open" : "Closed",
                     CreatedAt = i.CreatedAt,
                     PrintedAt = i.PrintedAt,
+                    Cancelled = i.Cancelled,
+                    CancelledAt = i.CancelledAt,
                     Items = i.Items.Select(item => new InvoiceItemDto
                     {
                         Id = item.Id,

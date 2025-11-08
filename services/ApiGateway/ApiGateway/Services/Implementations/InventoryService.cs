@@ -179,7 +179,7 @@ namespace ApiGateway.Services.Implementations
             try
             {
                 var response = await _cancelReservationClient.GetResponse<Result<StockReservationResponse>>(
-                    new CancelReservationRequest { ReservationId = reservationId });
+                    new CancelReservationRequest { InvoiceId = reservationId });
                 return response.Message;
             }
             catch (RequestTimeoutException ex)
@@ -236,12 +236,15 @@ namespace ApiGateway.Services.Implementations
                 }
 
                 var totalStock = productsResult.Data!.Sum(p => p.Stock);
+                var totalReserved = productsResult.Data!.Sum(p => p.ReservedStock);
+                var totalAvailable = productsResult.Data!.Sum(p => p.AvailableStock);
+                
                 var response = new StockStatusResponse
                 {
                     TotalProducts = productsResult.Data!.Count,
                     TotalStock = totalStock,
-                    TotalReserved = 0,
-                    TotalAvailable = totalStock
+                    TotalReserved = totalReserved,
+                    TotalAvailable = totalAvailable
                 };
 
                 return Result<StockStatusResponse>.Success(response);

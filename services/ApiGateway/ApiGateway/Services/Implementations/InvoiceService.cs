@@ -43,14 +43,15 @@ public class InvoiceService : IInvoiceService
         _logger = logger;
     }
 
-    public async Task<Result<List<InvoiceDto>>> GetAllInvoicesAsync()
+    public async Task<Result<List<InvoiceDto>>> GetAllInvoicesAsync(GetAllInvoicesRequest request)
     {
         try
         {
-            _logger.LogInformation("Buscando todas as notas fiscais");
+            _logger.LogInformation("Buscando notas fiscais com filtros: Status={Status}, IncludeCancelled={IncludeCancelled}, CreatedFrom={CreatedFrom}, CreatedTo={CreatedTo}",
+                request.Status, request.IncludeCancelled, request.CreatedFrom, request.CreatedTo);
 
             var response = await _getAllInvoicesClient.GetResponse<Result<List<InvoiceDto>>>(
-                new GetAllInvoicesRequest(),
+                request,
                 timeout: RequestTimeout.After(m: 1));
 
             return response.Message;

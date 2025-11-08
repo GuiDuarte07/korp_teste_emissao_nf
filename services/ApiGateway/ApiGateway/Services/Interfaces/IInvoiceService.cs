@@ -5,7 +5,7 @@ namespace ApiGateway.Services.Interfaces;
 
 public interface IInvoiceService
 {
-    Task<Result<List<InvoiceDto>>> GetAllInvoicesAsync();
+    Task<Result<List<InvoiceDto>>> GetAllInvoicesAsync(GetAllInvoicesRequest request);
     Task<Result<InvoiceDto>> GetInvoiceByIdAsync(Guid id);
     Task<Result<InvoiceDto>> CreateInvoiceAsync(CreateInvoiceRequest request);
     Task<Result> DeleteInvoiceAsync(Guid id);

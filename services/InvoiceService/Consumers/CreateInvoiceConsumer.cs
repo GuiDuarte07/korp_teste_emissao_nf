@@ -68,6 +68,8 @@ public class CreateInvoiceConsumer : IConsumer<CreateInvoiceRequest>
                 InvoiceNumber = invoice.InvoiceNumber,
                 Status = "Open",
                 CreatedAt = invoice.CreatedAt,
+                Cancelled = false,
+                CancelledAt = null,
                 Items = invoice.Items.Select(i => new InvoiceItemDto
                 {
                     Id = i.Id,

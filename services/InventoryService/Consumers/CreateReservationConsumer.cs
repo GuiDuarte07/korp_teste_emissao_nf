@@ -32,7 +32,7 @@ public class CreateReservationConsumer : IConsumer<CreateStockReservationRequest
             // Lock pessimista: FOR UPDATE bloqueia as linhas até o fim da transação
             // Previne race condition quando dois usuários tentam reservar o mesmo produto simultaneamente
             var products = await _context.Products
-                .FromSqlRaw("SELECT * FROM \"Products\" WHERE \"Id\" = ANY(@productIds) FOR UPDATE", 
+                .FromSqlRaw("SELECT * FROM products WHERE \"Id\" = ANY(@productIds) FOR UPDATE", 
                     new Npgsql.NpgsqlParameter("@productIds", productIds.ToArray()))
                 .ToListAsync();
 
