@@ -13,6 +13,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
+// Configuração do CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 // Configuração do MassTransit com RabbitMQ
 builder.Services.AddMassTransit(x =>
 {
@@ -59,6 +71,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Habilita o CORS
+app.UseCors("AllowAngularApp");
 
 app.UseAuthorization();
 

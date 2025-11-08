@@ -1,0 +1,149 @@
+.list-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+mat-card {
+  mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 16px;
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+
+  mat-card-content {
+    .filters-section {
+      margin-bottom: 24px;
+      padding: 16px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+
+      .filters-form {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+
+        mat-form-field {
+          flex: 1;
+          min-width: 200px;
+        }
+
+        .checkbox-field {
+          flex: 0 0 auto;
+        }
+
+        button {
+          flex: 0 0 auto;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+      }
+    }
+
+    .loading-state,
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 16px;
+
+      mat-icon {
+        color: #999;
+      }
+
+      p {
+        margin: 0;
+        font-size: 18px;
+        color: #666;
+      }
+    }
+
+    .invoices-table {
+      width: 100%;
+      margin-top: 16px;
+
+      th {
+        font-weight: 600;
+        background-color: #f5f5f5;
+      }
+
+      td {
+        padding: 12px 16px;
+
+        strong {
+          font-weight: 600;
+          color: #1976d2;
+        }
+
+        .not-printed {
+          color: #999;
+          font-style: italic;
+        }
+
+        mat-chip-set {
+          mat-chip {
+            font-weight: 500;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+              vertical-align: middle;
+              margin-right: 4px;
+            }
+
+            &.cancelled-chip {
+              background-color: #f44336;
+              color: white;
+            }
+
+            &.open-chip {
+              background-color: #ff9800;
+              color: white;
+            }
+
+            &.closed-chip {
+              background-color: #4caf50;
+              color: white;
+            }
+          }
+        }
+
+        button {
+          &[disabled] {
+            opacity: 0.4;
+          }
+        }
+      }
+    }
+  }
+
+  .label-status {
+    color: rbga(240, 240, 240, 0.1);
+    font-weight: 500;
+  }
+}

@@ -97,6 +97,22 @@ public class InvoiceService : IInvoiceService
         _logger.LogInformation("=== INICIANDO SAGA DE CRIAÇÃO DE NOTA FISCAL ===");
         _logger.LogInformation("Criando nota fiscal com {ItemCount} itens", request.Items.Count);
 
+        // Validação: Verificar se há produtos duplicados
+        var duplicateProducts = request.Items
+            .GroupBy(i => i.ProductId)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        if (duplicateProducts.Any())
+        {
+            _logger.LogWarning("Tentativa de criar nota fiscal com produtos duplicados: {ProductIds}", 
+                string.Join(", ", duplicateProducts));
+            return Result<InvoiceDto>.Failure(
+                ErrorCode.VALIDATION_ERROR, 
+                "Não é permitido adicionar o mesmo produto mais de uma vez na nota fiscal");
+        }
+
         // SAGA Step 1: Criar nota fiscal (Open)
         Result<InvoiceDto>? invoiceResult = null;
         try

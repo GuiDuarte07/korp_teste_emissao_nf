@@ -54,7 +54,6 @@ public class PrintInvoiceConsumer : IConsumer<PrintInvoiceRequest>
             }
 
             // Confirma a reserva (debita estoque no InventoryService)
-            // Uma reserva é criada por invoice, então confirmamos apenas uma vez
             var reservationId = invoice.Items.FirstOrDefault()?.ReservationId;
             
             if (!reservationId.HasValue)

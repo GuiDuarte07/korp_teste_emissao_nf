@@ -1,0 +1,93 @@
+<div class="form-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>add_circle</mat-icon>
+        Nova Nota Fiscal
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="loading" class="loading-state">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Carregando produtos...</p>
+      </div>
+
+      <form *ngIf="!loading" [formGroup]="invoiceForm" (ngSubmit)="onSubmit()">
+        <div class="items-section">
+          <div class="section-header">
+            <h3>Itens da Nota Fiscal</h3>
+            <button mat-raised-button type="button" (click)="addItem()" [disabled]="submitting">
+              <mat-icon>add</mat-icon>
+              Adicionar Item
+            </button>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div formArrayName="items" class="items-list">
+            <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="item-card">
+              <div class="item-header">
+                <span class="item-number">Item #{{ i + 1 }}</span>
+                <button mat-icon-button 
+                        type="button" 
+                        (click)="removeItem(i)" 
+                        [disabled]="items.length === 1 || submitting"
+                        color="warn">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+
+              <div class="item-fields">
+                <mat-form-field appearance="outline" class="product-field">
+                  <mat-label>Produto</mat-label>
+                  <mat-select formControlName="productId" (selectionChange)="onProductChange(i)">
+                    <mat-option *ngFor="let product of products" [value]="product.id">
+                      {{ product.code }} - {{ product.description }}
+                      <span class="stock-info">(Disponível: {{ product.availableStock }})</span>
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>inventory_2</mat-icon>
+                  <mat-error *ngIf="item.get('productId')?.invalid">
+                    Selecione um produto
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="quantity-field">
+                  <mat-label>Quantidade</mat-label>
+                  <input matInput type="number" formControlName="quantity" min="1">
+                  <mat-icon matPrefix>format_list_numbered</mat-icon>
+                  <mat-hint *ngIf="getAvailableStock(i) > 0">
+                    Disponível: {{ getAvailableStock(i) }} unidades
+                  </mat-hint>
+                  <mat-error *ngIf="isQuantityInvalid(i)">
+                    {{ getQuantityErrorMessage(i) }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="items.length === 0" class="no-items">
+            <mat-icon>info</mat-icon>
+            <p>Nenhum item adicionado. Clique em "Adicionar Item" para começar.</p>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="form-actions">
+          <button mat-raised-button type="button" (click)="onCancel()" [disabled]="submitting">
+            <mat-icon>close</mat-icon>
+            Cancelar
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="submitting || items.length === 0">
+            <mat-spinner *ngIf="submitting" diameter="20"></mat-spinner>
+            <mat-icon *ngIf="!submitting">save</mat-icon>
+            {{ submitting ? 'Criando...' : 'Criar Nota Fiscal' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

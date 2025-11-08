@@ -33,13 +33,35 @@ public class UpdateProductConsumer : IConsumer<UpdateProductRequest>
                 return;
             }
 
+            if (!string.IsNullOrEmpty(request.Code))
+            {
+                product.Code = request.Code;
+            }
+
             if (!string.IsNullOrEmpty(request.Description))
             {
                 product.Description = request.Description;
             }
 
+            // Calcula o estoque reservado atual do produto (usado para validação e resposta)
+            var reservedStock = await _context.StockReservationItems
+                .Where(ri => ri.ProductId == product.Id 
+                    && !ri.Reservation.Confirmed 
+                    && !ri.Reservation.Cancelled)
+                .SumAsync(ri => ri.Quantity);
+
             if (request.Stock.HasValue)
             {
+                // Valida se o novo estoque não é menor que o estoque reservado
+                if (request.Stock.Value < reservedStock)
+                {
+                    await context.RespondAsync(Result<ProductDto>.Failure(
+                        ErrorCode.VALIDATION_ERROR,
+                        $"Não é permitido definir o estoque ({request.Stock.Value}) para um valor menor que o estoque reservado ({reservedStock})"
+                    ));
+                    return;
+                }
+
                 product.Stock = request.Stock.Value;
             }
 
@@ -48,12 +70,6 @@ public class UpdateProductConsumer : IConsumer<UpdateProductRequest>
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Produto atualizado: {ProductId}", product.Id);
-
-            var reservedStock = await _context.StockReservationItems
-                .Where(ri => ri.ProductId == product.Id 
-                    && !ri.Reservation.Confirmed 
-                    && !ri.Reservation.Cancelled)
-                .SumAsync(ri => ri.Quantity);
 
             var response = new ProductDto
             {

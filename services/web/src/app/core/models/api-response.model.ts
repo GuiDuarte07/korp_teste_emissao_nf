@@ -1,0 +1,17 @@
+export interface ApiResponse<T> {
+  data?: T;
+  isSuccess: boolean;
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+export enum ErrorCode {
+  NOT_FOUND = 'NOT_FOUND',
+  INVALID_REQUEST = 'INVALID_REQUEST',
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+  INSUFFICIENT_STOCK = 'INSUFFICIENT_STOCK',
+  ALREADY_CONFIRMED = 'ALREADY_CONFIRMED',
+  ALREADY_CANCELLED = 'ALREADY_CANCELLED',
+  PRODUCT_NOT_FOUND = 'PRODUCT_NOT_FOUND',
+  RESERVATION_NOT_FOUND = 'RESERVATION_NOT_FOUND',
+}
