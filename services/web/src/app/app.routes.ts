@@ -3,6 +3,7 @@ import { ProductListComponent } from './features/inventory/pages/product-list/pr
 import { ProductFormComponent } from './features/inventory/pages/product-form/product-form.component';
 import { InvoiceListComponent } from './features/invoices/pages/invoice-list/invoice-list.component';
 import { InvoiceFormComponent } from './features/invoices/pages/invoice-form/invoice-form.component';
+import { InvoiceDetailComponent } from './features/invoices/pages/invoice-detail/invoice-detail.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/products', pathMatch: 'full' },
@@ -11,5 +12,6 @@ export const routes: Routes = [
   { path: 'products/edit/:id', component: ProductFormComponent },
   { path: 'invoices', component: InvoiceListComponent },
   { path: 'invoices/new', component: InvoiceFormComponent },
+  { path: 'invoices/:id', component: InvoiceDetailComponent },
   { path: '**', redirectTo: '/products' },
 ];

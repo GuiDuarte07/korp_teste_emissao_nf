@@ -76,7 +76,9 @@
         <ng-container matColumnDef="invoiceNumber">
           <th mat-header-cell *matHeaderCellDef>Número</th>
           <td mat-cell *matCellDef="let invoice">
-            <strong>#{{ invoice.invoiceNumber }}</strong>
+            <a class="invoice-link" (click)="navigateToDetail(invoice)">
+              <strong>#{{ invoice.invoiceNumber }}</strong>
+            </a>
           </td>
         </ng-container>
 

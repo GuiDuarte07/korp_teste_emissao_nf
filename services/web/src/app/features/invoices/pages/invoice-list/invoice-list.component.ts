@@ -112,6 +112,10 @@ export class InvoiceListComponent implements OnInit {
     this.router.navigate(['/invoices/new']);
   }
 
+  navigateToDetail(invoice: Invoice): void {
+    this.router.navigate(['/invoices', invoice.id]);
+  }
+
   printInvoice(invoice: Invoice): void {
     if (invoice.printedAt) {
       this.snackBar.open('Esta nota fiscal já foi impressa', 'Fechar', {
