@@ -20,6 +20,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { InvoiceService } from '../../services/invoice.service';
 import { Invoice, InvoiceStatus } from '../../../../core/models';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { LoadingService } from '../../../../core/services/loading.service';
 
 @Component({
   selector: 'app-invoice-list',
@@ -65,7 +66,8 @@ export class InvoiceListComponent implements OnInit {
     private invoiceService: InvoiceService,
     private router: Router,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loadingService: LoadingService
   ) {
     this.filterForm = this.fb.group({
       status: [null],
@@ -142,11 +144,13 @@ export class InvoiceListComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
+        this.loadingService.show('Imprimindo nota fiscal...');
         this.invoiceService.printInvoice(invoice.id).subscribe({
           next: () => {
             this.snackBar.open('Nota fiscal impressa com sucesso', 'Fechar', {
               duration: 3000,
             });
+            this.loadingService.hide();
             this.loadInvoices();
           },
           error: (error) => {
@@ -156,6 +160,7 @@ export class InvoiceListComponent implements OnInit {
             this.snackBar.open(errorMessage, 'Fechar', {
               duration: 5000,
             });
+            this.loadingService.hide();
           },
         });
       }

@@ -9,6 +9,15 @@
         </button>
         <button
           mat-raised-button
+          color="accent"
+          (click)="onDownloadPdf()"
+          *ngIf="invoice && !invoice.cancelled"
+        >
+          <mat-icon>download</mat-icon>
+          Baixar PDF
+        </button>
+        <button
+          mat-raised-button
           color="primary"
           (click)="onPrint()"
           *ngIf="invoice && !invoice.cancelled"

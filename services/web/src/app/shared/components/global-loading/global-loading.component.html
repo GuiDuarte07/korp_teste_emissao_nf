@@ -1,0 +1,6 @@
+<div class="loading-overlay" *ngIf="loading$ | async">
+  <div class="loading-content">
+    <mat-spinner diameter="60"></mat-spinner>
+    <p class="loading-message">{{ loadingMessage$ | async }}</p>
+  </div>
+</div>

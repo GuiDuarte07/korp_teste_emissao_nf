@@ -98,4 +98,25 @@ public class InvoiceController : ControllerBase
             return StatusCode(500, new { ErrorCode = ErrorCode.INTERNAL_ERROR.ToString(), ErrorMessage = "Erro interno ao imprimir nota fiscal" });
         }
     }
+
+    [HttpGet("{id}/pdf")]
+    public async Task<IActionResult> GenerateInvoicePdf(Guid id)
+    {
+        try
+        {
+            var result = await _invoiceService.GenerateInvoicePdfAsync(id);
+            
+            if (!result.IsSuccess)
+            {
+                return result.ToActionResult();
+            }
+
+            return File(result.Data!, "application/pdf", $"NotaFiscal_{id}.pdf");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao gerar PDF da nota fiscal {InvoiceId}", id);
+            return StatusCode(500, new { ErrorCode = ErrorCode.INTERNAL_ERROR.ToString(), ErrorMessage = "Erro interno ao gerar PDF" });
+        }
+    }
 }

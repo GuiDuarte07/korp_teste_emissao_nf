@@ -13,6 +13,7 @@ public class InvoiceService : IInvoiceService
     private readonly IRequestClient<CreateInvoiceRequest> _createInvoiceClient;
     private readonly IRequestClient<DeleteInvoiceRequest> _deleteInvoiceClient;
     private readonly IRequestClient<PrintInvoiceRequest> _printInvoiceClient;
+    private readonly IRequestClient<GenerateInvoicePdfRequest> _generatePdfClient;
     private readonly IRequestClient<GetProductByIdRequest> _getProductClient;
     private readonly IRequestClient<CreateStockReservationRequest> _createReservationClient;
     private readonly IRequestClient<CancelReservationRequest> _cancelReservationClient;
@@ -25,6 +26,7 @@ public class InvoiceService : IInvoiceService
         IRequestClient<CreateInvoiceRequest> createInvoiceClient,
         IRequestClient<DeleteInvoiceRequest> deleteInvoiceClient,
         IRequestClient<PrintInvoiceRequest> printInvoiceClient,
+        IRequestClient<GenerateInvoicePdfRequest> generatePdfClient,
         IRequestClient<GetProductByIdRequest> getProductClient,
         IRequestClient<CreateStockReservationRequest> createReservationClient,
         IRequestClient<CancelReservationRequest> cancelReservationClient,
@@ -36,6 +38,7 @@ public class InvoiceService : IInvoiceService
         _createInvoiceClient = createInvoiceClient;
         _deleteInvoiceClient = deleteInvoiceClient;
         _printInvoiceClient = printInvoiceClient;
+        _generatePdfClient = generatePdfClient;
         _getProductClient = getProductClient;
         _createReservationClient = createReservationClient;
         _cancelReservationClient = cancelReservationClient;
@@ -279,6 +282,30 @@ public class InvoiceService : IInvoiceService
         {
             _logger.LogError(ex, "Erro ao imprimir nota fiscal {InvoiceId}", id);
             return Result<InvoiceDto>.Failure(ErrorCode.INTERNAL_ERROR, "Erro ao imprimir nota fiscal");
+        }
+    }
+
+    public async Task<Result<byte[]>> GenerateInvoicePdfAsync(Guid id)
+    {
+        try
+        {
+            _logger.LogInformation("Gerando PDF da nota fiscal {InvoiceId}", id);
+
+            var response = await _generatePdfClient.GetResponse<Result<byte[]>>(
+                new GenerateInvoicePdfRequest { InvoiceId = id },
+                timeout: RequestTimeout.After(m: 1));
+
+            return response.Message;
+        }
+        catch (RequestTimeoutException ex)
+        {
+            _logger.LogError(ex, "Timeout ao gerar PDF da nota fiscal {InvoiceId}", id);
+            return Result<byte[]>.Failure(ErrorCode.INTERNAL_ERROR, "Timeout ao gerar PDF");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao gerar PDF da nota fiscal {InvoiceId}", id);
+            return Result<byte[]>.Failure(ErrorCode.INTERNAL_ERROR, "Erro ao gerar PDF");
         }
     }
 }

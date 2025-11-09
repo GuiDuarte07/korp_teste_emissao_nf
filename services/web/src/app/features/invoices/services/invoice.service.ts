@@ -55,4 +55,8 @@ export class InvoiceService {
   printInvoice(id: string): Observable<Invoice> {
     return this.apiService.post<Invoice>(`${this.endpoint}/${id}/print`, {});
   }
+
+  downloadInvoicePdf(id: string): Observable<Blob> {
+    return this.apiService.getBlob(`${this.endpoint}/${id}/pdf`);
+  }
 }

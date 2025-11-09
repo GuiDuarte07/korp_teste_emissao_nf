@@ -28,6 +28,9 @@ public class PrintInvoiceConsumer : IConsumer<PrintInvoiceRequest>
     {
         try
         {
+
+            Task.Delay(5000).Wait(); // Simula tempo de impressão
+
             _logger.LogInformation("Imprimindo nota fiscal {InvoiceId}", context.Message.Id);
 
             var invoice = await _context.Invoices

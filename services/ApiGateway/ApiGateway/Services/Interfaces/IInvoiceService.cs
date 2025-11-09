@@ -10,4 +10,5 @@ public interface IInvoiceService
     Task<Result<InvoiceDto>> CreateInvoiceAsync(CreateInvoiceRequest request);
     Task<Result> DeleteInvoiceAsync(Guid id);
     Task<Result<InvoiceDto>> PrintInvoiceAsync(Guid id);
+    Task<Result<byte[]>> GenerateInvoicePdfAsync(Guid id);
 }

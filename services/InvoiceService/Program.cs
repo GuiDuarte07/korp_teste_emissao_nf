@@ -2,6 +2,7 @@ using System.Reflection;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using InvoiceService.Infrastructure.Data;
+using InvoiceService.Services;
 using Shared.Contracts.Inventory;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<InvoiceDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Registrar o serviço de geração de PDF
+builder.Services.AddScoped<InvoicePdfGenerator>();
 
 // Configuração do MassTransit com RabbitMQ
 builder.Services.AddMassTransit(x =>

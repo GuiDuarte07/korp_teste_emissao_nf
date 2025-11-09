@@ -10,7 +10,7 @@ export interface Product {
 export interface CreateProductRequest {
   code: string;
   description: string;
-  stock: number;
+  initialStock: number;
 }
 
 export interface UpdateProductRequest {

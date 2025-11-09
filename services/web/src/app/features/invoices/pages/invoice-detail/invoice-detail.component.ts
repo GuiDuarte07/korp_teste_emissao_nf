@@ -10,6 +10,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { InvoiceService } from '../../services/invoice.service';
 import { Invoice } from '../../../../core/models';
+import { LoadingService } from '../../../../core/services/loading.service';
 
 @Component({
   selector: 'app-invoice-detail',
@@ -36,7 +37,8 @@ export class InvoiceDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private invoiceService: InvoiceService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loadingService: LoadingService
   ) {}
 
   ngOnInit(): void {
@@ -112,11 +114,13 @@ export class InvoiceDetailComponent implements OnInit {
   onPrint(): void {
     if (!this.invoice) return;
 
+    this.loadingService.show('Imprimindo nota fiscal...');
     this.invoiceService.printInvoice(this.invoice.id).subscribe({
       next: () => {
         this.snackBar.open('Nota fiscal impressa com sucesso', 'Fechar', {
           duration: 3000,
         });
+        this.loadingService.hide();
         this.loadInvoice(this.invoice!.id);
       },
       error: (error: any) => {
@@ -126,6 +130,36 @@ export class InvoiceDetailComponent implements OnInit {
         this.snackBar.open(errorMessage, 'Fechar', {
           duration: 5000,
         });
+        this.loadingService.hide();
+      },
+    });
+  }
+
+  onDownloadPdf(): void {
+    if (!this.invoice) return;
+
+    this.loadingService.show('Gerando PDF da nota fiscal...');
+    this.invoiceService.downloadInvoicePdf(this.invoice.id).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `NotaFiscal_${this.invoice!.invoiceNumber}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.snackBar.open('PDF baixado com sucesso', 'Fechar', {
+          duration: 3000,
+        });
+        this.loadingService.hide();
+      },
+      error: (error: any) => {
+        console.error('Erro ao baixar PDF', error);
+        const errorMessage =
+          error?.error?.errorMessage || 'Erro ao baixar PDF da nota fiscal';
+        this.snackBar.open(errorMessage, 'Fechar', {
+          duration: 5000,
+        });
+        this.loadingService.hide();
       },
     });
   }

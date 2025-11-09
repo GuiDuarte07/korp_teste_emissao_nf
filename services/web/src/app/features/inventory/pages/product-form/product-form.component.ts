@@ -103,7 +103,9 @@ export class ProductFormComponent implements OnInit {
     if (this.isEditMode && this.productId) {
       const request: UpdateProductRequest = {
         id: this.productId,
-        ...formValue,
+        code: formValue.code,
+        description: formValue.description,
+        stock: formValue.stock,
       };
 
       this.inventoryService.updateProduct(request).subscribe({
@@ -124,7 +126,11 @@ export class ProductFormComponent implements OnInit {
         },
       });
     } else {
-      const request: CreateProductRequest = formValue;
+      const request: CreateProductRequest = {
+        code: formValue.code,
+        description: formValue.description,
+        initialStock: formValue.stock,
+      };
 
       this.inventoryService.createProduct(request).subscribe({
         next: () => {
