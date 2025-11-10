@@ -1,0 +1,11 @@
+<div class="message" [class.user]="isUser()" [class.assistant]="isAssistant()" [class.function]="isFunction()">
+  <div class="message-avatar" *ngIf="!isFunction()">
+    <mat-icon>{{ isUser() ? 'person' : 'smart_toy' }}</mat-icon>
+  </div>
+  <div class="message-content">
+    <div class="message-text">{{ message.content }}</div>
+    <div class="message-timestamp" *ngIf="message.timestamp">
+      {{ message.timestamp | date: 'HH:mm' }}
+    </div>
+  </div>
+</div>

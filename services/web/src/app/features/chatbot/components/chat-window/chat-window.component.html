@@ -1,0 +1,28 @@
+<div class="chat-window">
+  <div class="chat-header">
+    <div class="header-title">
+      <mat-icon>smart_toy</mat-icon>
+      <span>Assistente Virtual</span>
+    </div>
+    <button mat-icon-button (click)="clearChat()" matTooltip="Limpar histórico">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+
+  <div class="chat-messages" #messagesContainer>
+    <app-chat-message
+      *ngFor="let message of getVisibleMessages()"
+      [message]="message"
+    ></app-chat-message>
+
+    <div class="loading-indicator" *ngIf="loading">
+      <mat-spinner diameter="30"></mat-spinner>
+      <span>Processando...</span>
+    </div>
+  </div>
+
+  <app-chat-input
+    [disabled]="loading"
+    (sendMessage)="onSendMessage($event)"
+  ></app-chat-input>
+</div>

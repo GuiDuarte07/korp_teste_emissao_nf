@@ -140,6 +140,28 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # Web Frontend (Angular Development Server)
+  web-frontend:
+    build:
+      context: ../services/web
+      dockerfile: Dockerfile
+    container_name: web-frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      # Mount source code for hot reload
+      - ../services/web/src:/app/src
+      - ../services/web/angular.json:/app/angular.json
+      - ../services/web/tsconfig.json:/app/tsconfig.json
+      - ../services/web/tsconfig.app.json:/app/tsconfig.app.json
+    networks:
+      - korp-network
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
 volumes:
   postgres-inventory-data:
     driver: local

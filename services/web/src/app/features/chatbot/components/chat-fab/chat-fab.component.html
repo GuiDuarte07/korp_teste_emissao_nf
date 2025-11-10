@@ -1,0 +1,19 @@
+<div class="chat-fab-container">
+  <!-- Janela do chat -->
+  <div class="chat-window-container" [@chatWindow]="isOpen ? 'open' : 'closed'">
+    <app-chat-window *ngIf="isOpen"></app-chat-window>
+  </div>
+
+  <!-- Botão flutuante -->
+  <button
+    mat-fab
+    extended
+    color="primary"
+    class="chat-fab-button"
+    (click)="toggleChat()"
+    [matTooltip]="isOpen ? 'Fechar chat' : 'Abrir assistente'"
+  >
+    <mat-icon>{{ isOpen ? 'close' : 'chat' }}</mat-icon>
+    <span *ngIf="!isOpen">Assistente</span>
+  </button>
+</div>

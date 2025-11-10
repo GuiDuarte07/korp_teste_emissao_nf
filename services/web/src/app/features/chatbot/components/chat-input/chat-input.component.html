@@ -1,0 +1,21 @@
+<div class="chat-input-container">
+  <mat-form-field appearance="outline" class="message-field">
+    <textarea
+      matInput
+      [(ngModel)]="message"
+      placeholder="Digite sua mensagem..."
+      rows="3"
+      [disabled]="disabled"
+      (keypress)="onKeyPress($event)"
+    ></textarea>
+  </mat-form-field>
+  <button
+    mat-fab
+    color="primary"
+    [disabled]="!message.trim() || disabled"
+    (click)="onSend()"
+    class="send-button"
+  >
+    <mat-icon>send</mat-icon>
+  </button>
+</div>
