@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="InvoiceService.Tests\**" />
+    <Content Remove="InvoiceService.Tests\**" />
+    <EmbeddedResource Remove="InvoiceService.Tests\**" />
+    <None Remove="InvoiceService.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MassTransit" Version="8.5.5" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />

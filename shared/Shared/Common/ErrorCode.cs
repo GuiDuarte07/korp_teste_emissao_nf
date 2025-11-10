@@ -18,6 +18,7 @@ namespace Shared.Common
         ALREADY_CONFIRMED,
         ALREADY_CANCELLED,
         HAS_RESERVATIONS,
+        DUPLICATE_REQUEST, // Idempotency: requisição duplicada
         
         // 500 - Internal Server Error
         INTERNAL_ERROR

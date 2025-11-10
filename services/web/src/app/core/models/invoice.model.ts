@@ -24,6 +24,7 @@ export interface InvoiceItem {
 
 export interface CreateInvoiceRequest {
   items: CreateInvoiceItemRequest[];
+  idempotencyKey?: string; // Chave única para garantir idempotência
 }
 
 export interface CreateInvoiceItemRequest {

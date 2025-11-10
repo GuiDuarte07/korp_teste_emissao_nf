@@ -92,12 +92,15 @@ export class ActionExecutorService {
     products: Array<{ productCode: string; quantity: number }>
   ): Promise<FunctionResult> {
     try {
-      // 1. Buscar todos os produtos
+      // 1. Gerar idempotency key única para esta requisição
+      const idempotencyKey = this.generateIdempotencyKey();
+
+      // 2. Buscar todos os produtos
       const allProducts = await firstValueFrom(
         this.inventoryService.getAllProducts()
       );
 
-      // 2. Resolver códigos para IDs
+      // 3. Resolver códigos para IDs
       const invoiceProducts: Array<{ productId: string; quantity: number }> =
         [];
       const notFound: string[] = [];
@@ -127,10 +130,13 @@ export class ActionExecutorService {
         };
       }
 
-      // 3. Criar nota fiscal
+      // 4. Criar nota fiscal COM idempotency key
       const request: CreateInvoiceRequest = {
         items: invoiceProducts,
+        idempotencyKey: idempotencyKey, // ✅ Adiciona chave de idempotência
       };
+
+      console.log(`🔑 Criando invoice com idempotency key: ${idempotencyKey}`);
 
       const invoice = await firstValueFrom(
         this.invoiceService.createInvoice(request)
@@ -156,6 +162,13 @@ export class ActionExecutorService {
         error: error?.error?.errorMessage || 'Erro ao criar nota fiscal',
       };
     }
+  }
+
+  /**
+   * Gera uma chave de idempotência única (UUID v4)
+   */
+  private generateIdempotencyKey(): string {
+    return crypto.randomUUID();
   }
 
   private async listProducts(searchTerm?: string): Promise<FunctionResult> {

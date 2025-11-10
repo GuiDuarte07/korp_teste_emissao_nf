@@ -11,6 +11,7 @@ public class InvoiceDbContext : DbContext
 
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
+    public DbSet<IdempotencyKey> IdempotencyKeys { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -87,6 +88,45 @@ public class InvoiceDbContext : DbContext
 
             entity.Property(e => e.ReservationId)
                 .HasColumnName("reservation_id");
+        });
+
+        // Configuração da entidade IdempotencyKey
+        modelBuilder.Entity<IdempotencyKey>(entity =>
+        {
+            entity.ToTable("idempotency_keys");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .HasColumnName("id")
+                .ValueGeneratedNever();
+
+            entity.Property(e => e.Key)
+                .HasColumnName("key")
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(e => e.InvoiceId)
+                .HasColumnName("invoice_id")
+                .IsRequired();
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .IsRequired();
+
+            entity.Property(e => e.ResponsePayload)
+                .HasColumnName("response_payload")
+                .HasColumnType("jsonb");
+
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnName("expires_at")
+                .IsRequired();
+
+            // Índice único na chave de idempotência
+            entity.HasIndex(e => e.Key)
+                .IsUnique();
+
+            // Índice para limpeza de chaves expiradas
+            entity.HasIndex(e => e.ExpiresAt);
         });
     }
 }

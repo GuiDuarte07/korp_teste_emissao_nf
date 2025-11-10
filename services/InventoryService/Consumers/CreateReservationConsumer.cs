@@ -29,12 +29,25 @@ public class CreateReservationConsumer : IConsumer<CreateStockReservationRequest
             // Verifica disponibilidade de estoque para todos os produtos
             var productIds = request.Items.Select(i => i.ProductId).ToList();
             
-            // Lock pessimista: FOR UPDATE bloqueia as linhas até o fim da transação
+            // Lock pessimista para PostgreSQL: FOR UPDATE bloqueia as linhas até o fim da transação
             // Previne race condition quando dois usuários tentam reservar o mesmo produto simultaneamente
-            var products = await _context.Products
-                .FromSqlRaw("SELECT * FROM products WHERE \"Id\" = ANY(@productIds) FOR UPDATE", 
-                    new Npgsql.NpgsqlParameter("@productIds", productIds.ToArray()))
-                .ToListAsync();
+            List<Product> products;
+            
+            if (_context.Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+            {
+                // SQLite: usa transação mas sem lock explícito (para testes)
+                products = await _context.Products
+                    .Where(p => productIds.Contains(p.Id))
+                    .ToListAsync();
+            }
+            else
+            {
+                // PostgreSQL: usa FOR UPDATE para lock pessimista
+                products = await _context.Products
+                    .FromSqlRaw("SELECT * FROM products WHERE \"Id\" = ANY(@productIds) FOR UPDATE", 
+                        new Npgsql.NpgsqlParameter("@productIds", productIds.ToArray()))
+                    .ToListAsync();
+            }
 
             var insufficientStockProducts = new List<string>();
 

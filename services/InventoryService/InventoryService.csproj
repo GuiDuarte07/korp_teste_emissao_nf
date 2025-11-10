@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="InventoryService.Tests\**" />
+    <Content Remove="InventoryService.Tests\**" />
+    <EmbeddedResource Remove="InventoryService.Tests\**" />
+    <None Remove="InventoryService.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="9.0.0" />
     <PackageReference Include="MassTransit" Version="8.5.5" />
