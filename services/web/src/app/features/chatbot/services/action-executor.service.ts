@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { InventoryService } from '../../inventory/services/inventory.service';
 import { InvoiceService } from '../../invoices/services/invoice.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { FunctionResult } from '../models';
 import { CreateInvoiceRequest, Invoice, Product } from '../../../core/models';
 
@@ -11,7 +12,8 @@ import { CreateInvoiceRequest, Invoice, Product } from '../../../core/models';
 export class ActionExecutorService {
   constructor(
     private inventoryService: InventoryService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
+    private notification: NotificationService
   ) {}
 
   async execute(functionName: string, args: any): Promise<FunctionResult> {
@@ -46,10 +48,12 @@ export class ActionExecutorService {
       }
     } catch (error: any) {
       console.error(`Erro ao executar ${functionName}:`, error);
+      const msg =
+        error?.error?.errorMessage || error?.message || 'Erro desconhecido';
+      this.notification.error(msg);
       return {
         success: false,
-        error:
-          error?.error?.errorMessage || error?.message || 'Erro desconhecido',
+        error: msg,
       };
     }
   }
@@ -68,6 +72,8 @@ export class ActionExecutorService {
         })
       );
 
+      this.notification.success(`Produto ${product.code} criado`);
+
       return {
         success: true,
         data: {
@@ -81,6 +87,9 @@ export class ActionExecutorService {
         },
       };
     } catch (error: any) {
+      this.notification.error(
+        error?.error?.errorMessage || 'Erro ao criar produto'
+      );
       return {
         success: false,
         error: error?.error?.errorMessage || 'Erro ao criar produto',
@@ -142,6 +151,15 @@ export class ActionExecutorService {
         this.invoiceService.createInvoice(request)
       );
 
+      // Atualiza caches dependentes (itens reservados mudam disponibilidade)
+      this.inventoryService.refreshAllProducts().subscribe();
+
+      this.notification.success(
+        `Nota fiscal NF-${invoice.invoiceNumber
+          .toString()
+          .padStart(6, '0')} criada`
+      );
+
       return {
         success: true,
         data: {
@@ -157,6 +175,9 @@ export class ActionExecutorService {
         },
       };
     } catch (error: any) {
+      this.notification.error(
+        error?.error?.errorMessage || 'Erro ao criar nota fiscal'
+      );
       return {
         success: false,
         error: error?.error?.errorMessage || 'Erro ao criar nota fiscal',
@@ -321,6 +342,14 @@ export class ActionExecutorService {
 
       await firstValueFrom(this.invoiceService.deleteInvoice(invoice.id));
 
+      // Atualiza listas
+      this.invoiceService.refreshAllInvoices().subscribe();
+      this.inventoryService.refreshAllProducts().subscribe();
+
+      this.notification.info(
+        `Nota fiscal ${invoiceNumber} cancelada com sucesso`
+      );
+
       return {
         success: true,
         data: {
@@ -329,6 +358,9 @@ export class ActionExecutorService {
         },
       };
     } catch (error: any) {
+      this.notification.error(
+        error?.error?.errorMessage || 'Erro ao cancelar nota fiscal'
+      );
       return {
         success: false,
         error: error?.error?.errorMessage || 'Erro ao cancelar nota fiscal',
@@ -373,6 +405,14 @@ export class ActionExecutorService {
 
       await firstValueFrom(this.invoiceService.printInvoice(invoice.id));
 
+      // Atualiza listas (estoque e nota fechada)
+      this.invoiceService.refreshAllInvoices().subscribe();
+      this.inventoryService.refreshAllProducts().subscribe();
+
+      this.notification.success(
+        `Nota fiscal ${invoiceNumber} impressa e fechada`
+      );
+
       return {
         success: true,
         data: {
@@ -381,6 +421,9 @@ export class ActionExecutorService {
         },
       };
     } catch (error: any) {
+      this.notification.error(
+        error?.error?.errorMessage || 'Erro ao imprimir nota fiscal'
+      );
       return {
         success: false,
         error: error?.error?.errorMessage || 'Erro ao imprimir nota fiscal',

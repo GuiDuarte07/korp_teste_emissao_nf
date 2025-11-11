@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { HttpParams } from '@angular/common/http';
 import { ApiService } from '../../../core/services/api.service';
 import {
@@ -13,6 +13,9 @@ import {
 })
 export class InvoiceService {
   private readonly endpoint = 'invoices';
+  // Cache reativo de notas (lista geral sem filtros)
+  private invoicesSubject = new BehaviorSubject<Invoice[] | null>(null);
+  invoices$ = this.invoicesSubject.asObservable();
 
   constructor(private apiService: ApiService) {}
 
@@ -37,7 +40,25 @@ export class InvoiceService {
       }
     }
 
-    return this.apiService.get<Invoice[]>(this.endpoint, params);
+    return this.apiService.get<Invoice[]>(this.endpoint, params).pipe(
+      tap((list) => {
+        // Atualiza cache apenas quando sem filtros (lista "geral")
+        const hasFilters = !!(
+          filters?.status ||
+          filters?.includeCancelled !== undefined ||
+          filters?.createdFrom ||
+          filters?.createdTo
+        );
+        if (!hasFilters) {
+          this.invoicesSubject.next(list);
+        }
+      })
+    );
+  }
+
+  // Força refresh da lista sem filtros
+  refreshAllInvoices(): Observable<Invoice[]> {
+    return this.getAllInvoices({});
   }
 
   getInvoiceById(id: string): Observable<Invoice> {
@@ -45,15 +66,21 @@ export class InvoiceService {
   }
 
   createInvoice(request: CreateInvoiceRequest): Observable<Invoice> {
-    return this.apiService.post<Invoice>(this.endpoint, request);
+    return this.apiService
+      .post<Invoice>(this.endpoint, request)
+      .pipe(tap(() => this.refreshAllInvoices().subscribe()));
   }
 
   deleteInvoice(id: string): Observable<void> {
-    return this.apiService.delete<void>(`${this.endpoint}/${id}`);
+    return this.apiService
+      .delete<void>(`${this.endpoint}/${id}`)
+      .pipe(tap(() => this.refreshAllInvoices().subscribe()));
   }
 
   printInvoice(id: string): Observable<Invoice> {
-    return this.apiService.post<Invoice>(`${this.endpoint}/${id}/print`, {});
+    return this.apiService
+      .post<Invoice>(`${this.endpoint}/${id}/print`, {})
+      .pipe(tap(() => this.refreshAllInvoices().subscribe()));
   }
 
   downloadInvoicePdf(id: string): Observable<Blob> {
