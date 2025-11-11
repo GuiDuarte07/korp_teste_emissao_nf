@@ -225,6 +225,9 @@ export const environment = {
 ## 18. Licença
 Projeto de avaliação técnica – processo seletivo Korp.
 
----
-Preparado para gravação do vídeo: demonstre cada fluxo, referencie os códigos de erro mostrados e destaque pontos de resiliência (Saga, Idempotência, Lock, Retry). Boa apresentação!
+### Vídeo de Demonstração
+
+Assista ao vídeo mostrando todos os fluxos, códigos de erro e pontos de resiliência implementados: 
+
+[https://www.youtube.com/watch?v=ZmB-gSbHpxQ](https://www.youtube.com/watch?v=ZmB-gSbHpxQ)
 
