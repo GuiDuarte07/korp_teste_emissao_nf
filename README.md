@@ -196,6 +196,31 @@ shared/             -> Contratos e Result<T>
 infra/              -> docker-compose (RabbitMQ, PostgreSQL)
 ```
 
+### Configuração de ambiente do Angular
+
+Por segurança, os arquivos `environment.ts` e `environment.prod.ts` **não são versionados**. Para rodar o front-end, copie o arquivo de exemplo e preencha localmente:
+
+```powershell
+cp services/web/src/environments/environment.example.ts services/web/src/environments/environment.ts
+cp services/web/src/environments/environment.example.ts services/web/src/environments/environment.prod.ts
+```
+
+Preencha as chaves de API (`openAiApiKey`, `geminiApiKey`) manualmente, conforme necessário.
+
+Exemplo:
+```typescript
+export const environment = {
+	production: false,
+	apiUrl: 'http://localhost:5263/api',
+	aiProvider: 'gemini',
+	openAiApiKey: '', // sua chave local
+	openAiModel: 'gpt-3.5-turbo',
+	geminiApiKey: '', // sua chave local
+	geminiModel: 'gemini-2.0-flash',
+};
+```
+
+
 
 ## 18. Licença
 Projeto de avaliação técnica – processo seletivo Korp.
